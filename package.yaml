@@ -1,0 +1,92 @@
+name:                depend
+version:             0.1.0.0
+github:              "githubuser/depend"
+license:             BSD3
+author:              "Jacques R. Comeaux"
+maintainer:          "jacquesrcomeaux@gmail.com"
+copyright:           "2022 Jacques R. Comeaux"
+
+extra-source-files:
+- README.md
+# - ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/depend#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+# - rio
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Wincomplete-record-updates
+- -Wredundant-constraints
+- -Wmissing-local-signatures
+- -Wmissing-export-lists
+- -Wpartial-fields
+- -Wmonomorphism-restriction
+- -Widentities
+- -Wno-unticked-promoted-constructors
+- -fprint-expanded-synonyms
+
+default-extensions:
+- ApplicativeDo
+- BangPatterns
+- ConstraintKinds
+- DataKinds
+- EmptyCase
+- ExistentialQuantification
+- FlexibleContexts
+- FlexibleInstances
+- GADTs
+- GeneralizedNewtypeDeriving
+- InstanceSigs
+- KindSignatures
+- LambdaCase
+- MultiParamTypeClasses
+- NoImplicitPrelude
+- NoStarIsType
+- OverloadedStrings
+- PatternSynonyms
+- PolyKinds
+- RankNTypes
+- ScopedTypeVariables
+- StandaloneDeriving
+- StandaloneKindSignatures
+- TupleSections
+- TypeApplications
+- TypeFamilies
+- TypeFamilyDependencies
+- TypeOperators
+
+library:
+  source-dirs: src
+
+executables:
+  depend-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - depend
+
+tests:
+  depend-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - depend
