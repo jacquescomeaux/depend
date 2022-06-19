@@ -1,6 +1,7 @@
 module Main (main) where
 
-import Prelude (IO, pure)
+import RIO
+
 
 main :: IO ()
 main = pure ()

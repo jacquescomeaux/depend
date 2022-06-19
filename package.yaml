@@ -1,14 +1,12 @@
 name:                depend
 version:             0.1.0.0
-github:              "githubuser/depend"
-license:             BSD3
+github:              "jacquescomeaux/depend"
 author:              "Jacques R. Comeaux"
 maintainer:          "jacquesrcomeaux@gmail.com"
 copyright:           "2022 Jacques R. Comeaux"
 
 extra-source-files:
 - README.md
-# - ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -21,7 +19,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 
 dependencies:
 - base >= 4.7 && < 5
-# - rio
+- rio
 
 ghc-options:
 - -Wall
