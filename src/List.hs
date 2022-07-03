@@ -14,23 +14,35 @@ module List
     , All
     , Map
     , Concat
+    , SList (..)
     ) where
 
 import RIO hiding (Map)
 
 import Data.Kind (Type, Constraint)
-import Data.Type.Equality (TestEquality (..), (:~:) (..))
 
-import Nat (SNat (..), Nat (..))
+import Nat (Nat (..))
+import Singletons (Sing)
+
+
+-- | Singletons for lists
+type SList :: forall k . [k] -> Type
+data SList :: [k] -> Type where
+    SNil :: SList '[]
+    (:%) :: Sing t -> SList ts -> SList (t : ts)
+infixr 5 :%
 
 -- | Structural recursion helper for lists
 data ListLen :: [k] -> Type where
     LZ :: ListLen '[]
     LS :: KnownListLen ts => ListLen (t : ts)
+
 class KnownListLen (ts :: [k]) where
     getListLen :: ListLen ts
+
 instance KnownListLen '[] where
     getListLen = LZ
+
 instance KnownListLen ts => KnownListLen (t : ts) where
     getListLen = LS
 
@@ -38,6 +50,7 @@ instance KnownListLen ts => KnownListLen (t : ts) where
 data LElem :: forall a . [a] -> a -> Type where
     LEZ :: LElem (x : xs) x
     LES :: LElem xs x -> LElem (y : xs) x
+
 deriving instance Show (LElem xs x)
 
 -- | Append two type-level lists
