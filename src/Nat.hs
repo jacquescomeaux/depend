@@ -38,6 +38,7 @@ instance KnownNat Zero where
 instance KnownNat n => KnownNat (Succ n) where
     getSNat = SS getSNat
 
+-- needs UndecidableInstances
 type P :: GHC.Nat -> Nat
 type family P n where
     P 0 = Zero
