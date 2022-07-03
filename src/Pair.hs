@@ -1,4 +1,4 @@
--- {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Pair
     ( SPair (..)
     , sFst
@@ -27,6 +27,7 @@ data SPair ab where
 type instance Sing @(h, k) = SPair
 
 instance (SingKind h, SingKind k) => SingKind (h, k) where
+    -- TODO why does this need UndecidableInstances
     type Demote (h, k) = (Demote h, Demote k)
     fromSing = \case
         SPair sa sb -> (fromSing sa, fromSing sb)

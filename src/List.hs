@@ -2,7 +2,6 @@
 Module      : List
 Description : Helper definitions for working with type-level lists
 -}
--- {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE UndecidableInstances #-}
 module List
     ( ListLen (..)
@@ -20,9 +19,10 @@ module List
 import RIO hiding (Map)
 
 import Data.Kind (Type, Constraint)
+import Data.Type.Equality (TestEquality(..), (:~:)(..))
 
 import Nat (Nat (..))
-import Singletons (Sing)
+import Singletons (pattern Sing, Sing, Known (..), SomeSing (..), SingKind (..), SingInstance (..))
 
 
 -- | Singletons for lists
@@ -31,6 +31,35 @@ data SList :: [k] -> Type where
     SNil :: SList '[]
     (:%) :: Sing t -> SList ts -> SList (t : ts)
 infixr 5 :%
+
+type instance Sing @[k] = SList
+
+instance SingKind k => SingKind [k] where
+    type Demote [k] = [Demote k]
+    fromSing = \case
+        SNil      -> []
+        (x :% xs) -> fromSing x : fromSing xs
+    toSing = \case
+        []       -> SomeSing SNil
+        ((toSing -> SomeSing sx) : (toSing -> SomeSing sl)) ->
+            SomeSing $ sx :% sl
+    singInstance = \case
+        SNil         -> SingInstance
+        Sing :% Sing -> SingInstance
+
+instance Known '[] where
+    getSing = SNil
+
+instance (Known t, Known ts) => Known (t : ts) where
+    getSing = getSing :% getSing
+
+instance TestEquality (Sing @k) => TestEquality (SList @k) where
+    testEquality SNil SNil         = Just Refl
+    testEquality (t :% ts) (u :% us) =
+        case (testEquality t u, testEquality ts us) of
+            (Just Refl, Just Refl) -> Just Refl
+            _   -> Nothing
+    testEquality _ _  = Nothing
 
 -- | Structural recursion helper for lists
 data ListLen :: [k] -> Type where

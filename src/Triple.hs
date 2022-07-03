@@ -1,4 +1,4 @@
--- {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Triple
     ( STriple (..)
     ) where
@@ -25,6 +25,7 @@ data STriple abc where
 type instance Sing @(i, j, k) = STriple
 
 instance (SingKind i, SingKind j, SingKind k) => SingKind (i, j, k) where
+    -- needs undecidable instances
     type Demote (i, j, k) = (Demote i, Demote j, Demote k)
     fromSing = \case
         STriple sa sb sc -> (fromSing sa, fromSing sb, fromSing sc)

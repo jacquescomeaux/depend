@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 module Maybe
     ( SMaybe (..)
     , MMaybe
@@ -27,6 +28,7 @@ data SMaybe mx where
 type instance Sing @(Maybe k) = SMaybe
 
 instance SingKind k => SingKind (Maybe k) where
+    -- needs UndecidableInstances
     type Demote (Maybe k) = Maybe (Demote k)
     fromSing = \case
         SNothing  -> Nothing

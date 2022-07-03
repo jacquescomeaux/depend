@@ -1,3 +1,5 @@
+{-# LANGUAGE QuantifiedConstraints #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-|
 Module      : Product
 Description : n-ary Products
@@ -22,8 +24,17 @@ import RIO
 
 import Data.Kind (Type)
 import Data.Type.Equality (TestEquality(..), (:~:)(..))
+import GHC.Show (showsPrec)
 
-import List (type (++), LElem (..))
+import List (SList (..), type (++), LElem (..))
+import Singletons (pattern Sing, Known (..), SingKind)
+import Higher
+    ( HFunctor (..)
+    , HFoldable (..)
+    , HTraversable (..)
+    , HApply (..)
+    , HApplicative (..)
+    )
 
 
 type K :: Type -> Type -> Type
@@ -71,3 +82,96 @@ instance TestEquality f => TestEquality (Product f) where
 prodToList :: Product (K a) ts -> [a]
 prodToList PNil         = []
 prodToList (K x ::: xs) = x : prodToList xs
+
+instance HFunctor Product where
+    hmap _ PNil       = PNil
+    hmap f (x ::: xs) = f x ::: hmap f xs
+    smap
+        :: forall k (ts :: [k]) f g .
+           ( SingKind k
+           , Known ts
+           )
+        => (forall t . Known t => f t -> g t)
+        -> Product f ts
+        -> Product g ts
+    smap _ PNil       = PNil
+    smap f (x ::: xs) = case getSing @ts of
+        Sing :% Sing -> f x ::: smap f xs
+
+instance HFoldable Product where
+    hfoldMap _ PNil       = mempty
+    hfoldMap f (x ::: xs) = f x <> hfoldMap f xs
+    sfoldMap
+        :: forall k ts m f .
+           (SingKind k, Known (ts :: [k]), Monoid m)
+        => (forall t . Known t => f t -> m) -> Product f ts -> m
+    sfoldMap _ PNil = mempty
+    sfoldMap f (x ::: xs) = case getSing @ts of
+        Sing :% Sing -> f x <> sfoldMap f xs
+    hfoldr :: (forall t . f t -> b -> b) -> b -> Product f ts -> b
+    hfoldr _ d PNil       = d
+    hfoldr f d (x ::: xs) = f x (hfoldr f d xs)
+    sfoldr
+        :: forall k ts f b .
+           (SingKind k, Known (ts :: [k]))
+        => (forall t . Known t => f t -> b -> b) -> b -> Product f ts -> b
+    sfoldr _ d PNil       = d
+    sfoldr f d (x ::: xs) = case getSing @ts of
+        Sing :% Sing -> f x (sfoldr f d xs)
+
+instance HTraversable Product where
+    htraverse _ PNil       = pure PNil
+    htraverse f (x ::: xs) = liftA2 (:::) (f x) (htraverse f xs)
+    straverse
+        :: forall k ts m f g .
+           ( SingKind k
+           , Known (ts :: [k])
+           , Applicative m
+           )
+        => (forall t . Known t => f t -> m (g t))
+        -> Product f ts
+        -> m (Product g ts)
+    straverse _ PNil       = pure PNil
+    straverse f (x ::: xs) = case getSing @ts of
+        Sing :% Sing -> liftA2 (:::) (f x) (straverse f xs)
+
+instance HApply Product where
+    hliftA2 _ PNil PNil = PNil
+    hliftA2 f (x ::: xs) (y ::: ys) = f x y ::: hliftA2 f xs ys
+    sliftA2
+        :: forall k (ts :: [k]) f g h .
+           ( SingKind k
+           , Known ts
+           )
+        => (forall t . Known t => f t -> g t -> h t)
+        -> Product f ts
+        -> Product g ts
+        -> Product h ts
+    sliftA2 _ PNil PNil             = PNil
+    sliftA2 f (x ::: xs) (y ::: ys) = case getSing @ts of
+        Sing :% Sing -> f x y ::: sliftA2 f xs ys
+
+instance HApplicative Product where
+    spure
+        :: forall k (ts :: [k]) f .
+           ( SingKind k
+           , Known ts
+           )
+        => (forall t . Known t => f t)
+        -> Product f ts
+    spure f = case getSing @ts of
+        SNil         -> PNil
+        Sing :% Sing -> f ::: spure f
+
+instance (SingKind k, Known ts, forall t . Known t => Show (f t)) => Show (Product f (ts :: [k])) where
+    showsPrec a xs = \x  -> "[" <> showProd xs <> x
+      where
+        showProd :: forall m g us . (Known us, forall u . Known u => Show (g u)) => Product g (us :: [k]) -> String
+        showProd PNil         = "]"
+        showProd (x ::: PNil) = case getSing @us of (Sing :% _) -> show x <> "]"
+        showProd (x ::: xs)   = case getSing @us of (Sing :% Sing) -> show x <> ", " <> showProd xs
+
+instance (SingKind k, Known ts, forall t . Known t => Eq (f t)) => Eq (Product f (ts :: [k])) where
+    (==) PNil PNil = True
+    (==) (x:::xs) (y:::ys) = case getSing @ts of
+        Sing :% Sing -> x == y && xs == ys
